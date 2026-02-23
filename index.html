@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control NOA – Ingresos, Gastos y Ahorro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-alt: #151b2f;
+      --card: #1f2942;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.12);
+      --text: #f9fafb;
+      --text-soft: #9ca3af;
+      --danger: #f97373;
+      --success: #22c55e;
+      --border: #29324b;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: var(--shadow-soft);
+      padding: 24px 20px 26px;
+      backdrop-filter: blur(18px);
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .title-block h1 {
+      font-size: 20px;
+      letter-spacing: 0.03em;
+    }
+
+    .title-block p {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .month-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .month-select label {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    select,
+    input,
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      padding: 8px 11px;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #eef2ff;
+      font-weight: 500;
+      padding-inline: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.45);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(79, 70, 229, 0.6);
+      filter: brightness(1.05);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.55);
+      filter: brightness(0.97);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 1.1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 55%),
+        linear-gradient(155deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+      border-radius: 20px;
+      padding: 16px 14px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 16px 35px rgba(15, 23, 42, 0.75);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(96, 165, 250, 0.2), transparent 50%);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .card-header span {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    .field label {
+      color: var(--text-soft);
+    }
+
+    .field-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .field-row > * {
+      flex: 1;
+    }
+
+    input[type="number"] {
+      width: 100%;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-soft);
+    }
+
+    .tag-usd {
+      color: #bbf7d0;
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .tag-crc {
+      color: #fee2e2;
+      background: rgba(248, 113, 113, 0.08);
+      border-color: rgba(248, 113, 113, 0.4);
+    }
+
+    .summary-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .summary-label {
+      color: var(--text-soft);
+    }
+
+    .summary-value {
+      font-weight: 500;
+    }
+
+    .summary-value.positive {
+      color: var(--success);
+    }
+
+    .summary-value.negative {
+      color: var(--danger);
+    }
+
+    .summary-value.neutral {
+      color: #e5e7eb;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(129, 140, 248, 0.6);
+      color: #c7d2fe;
+    }
+
+    .badge span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .expenses-list {
+      position: relative;
+      z-index: 1;
+      max-height: 250px;
+      overflow-y: auto;
+      margin-top: 6px;
+      padding-right: 4px;
+    }
+
+    .expense-row {
+      display: grid;
+      grid-template-columns: auto auto auto 68px;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.92);
+      margin-bottom: 4px;
+    }
+
+    .expense-row span.desc {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expense-row span.amount {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .expense-row button {
+      padding: 3px 8px;
+      font-size: 11px;
+      box-shadow: none;
+      background: rgba(239, 68, 68, 0.12);
+      color: #fecaca;
+      border-radius: 999px;
+    }
+
+    .expense-row button:hover {
+      background: rgba(239, 68, 68, 0.22);
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .footer strong {
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-block">
+        <h1>Panel NOA – Flujo Mensual</h1>
+        <p>Control de ingresos, gastos y ahorro (USD / CRC)</p>
+      </div>
+      <div class="month-select">
+        <label for="monthSelect">Mes de trabajo:</label>
+        <select id="monthSelect"></select>
+        <button id="btnClearMonth" type="button" style="background:transparent;border:1px solid rgba(148,163,184,0.4);color:#e5e7eb;box-shadow:none;padding-inline:10px;font-size:11px;">
+          Limpiar mes
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- INGRESOS -->
+      <section class="card" id="card-income">
+        <div class="card-header">
+          <h2>Ingresos y Ahorro</h2>
+        </div>
+        <div class="form-grid">
+          <div class="field-row">
+            <div class="field">
+              <label for="income1">Ingreso 1 (USD)</label>
+              <input type="number" id="income1" min="0" step="0.01" placeholder="Ej. 1500" />
+            </div>
+            <div class="field">
+              <label for="income2">Ingreso 2 (USD)</label>
+              <input type="number" id="income2" min="0" step="0.01" placeholder="Ej. 500" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="savingGoal">Meta de ahorro (USD)</label>
+              <input type="number" id="savingGoal" min="0" step="0.01" placeholder="Ej. 300" />
+            </div>
+            <div class="field">
+              <label for="usdToCrc">Tipo de cambio del día</label>
+              <input type="number" id="usdToCrc" min="1" step="0.01" placeholder="CRC por 1 USD" />
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Total ingresos</span>
+            <span class="summary-value neutral" id="sumIncome">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Disponible para gastar (después del ahorro)</span>
+            <span class="summary-value neutral" id="sumAvailable">$0.00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- GASTOS -->
+      <section class="card" id="card-expenses">
+        <div class="card-header">
+          <h2>Gastos</h2>
+          <span>Todo convertido a USD automáticamente</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field-row">
+            <div class="field">
+              <label for="expenseDesc">Descripción</label>
+              <input id="expenseDesc" type="text" placeholder="Ej. Renta, alimentación, carro..." />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="expenseAmount">Monto</label>
+              <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="Ej. 250" />
+            </div>
+            <div class="field">
+              <label for="expenseCurrency">Moneda</label>
+              <select id="expenseCurrency">
+                <option value="USD">USD</option>
+                <option value="CRC">CRC</option>
+              </select>
+            </div>
+          </div>
+          <button id="btnAddExpense" type="button">
+            + Agregar gasto
+          </button>
+        </div>
+
+        <div class="expenses-list" id="expensesList"></div>
+      </section>
+
+      <!-- RESUMEN -->
+      <section class="card" id="card-summary">
+        <div class="card-header">
+          <h2>Resumen mensual</h2>
+          <span class="badge">
+            <span class="dot"></span>
+            En vivo por mes seleccionado
+          </span>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Total gastos (USD)</span>
+            <span class="summary-value negative" id="sumExpenses">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Resultado después de gastos</span>
+            <span class="summary-value neutral" id="sumResultAfterExpenses">$0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Resultado final (ingresos – ahorro – gastos)</span>
+            <span class="summary-value neutral" id="sumFinal">$0.00</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>
+        Tip: define el tipo de cambio del <strong>día</strong> y registra gastos en USD o CRC.
+      </span>
+      <span>
+        Los datos se guardan por mes en este navegador (localStorage, sin backend).
+      </span>
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "noa_monthly_cashflow_v1";
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Error leyendo estado", e);
+        return {};
+      }
+    }
+
+    function saveState(state) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error("Error guardando estado", e);
+      }
+    }
+
+    const appState = loadState();
+
+    function currentMonthKey() {
+      const sel = document.getElementById("monthSelect");
+      return sel.value;
+    }
+
+    function ensureMonthState(key) {
+      if (!appState[key]) {
+        appState[key] = {
+          income1: 0,
+          income2: 0,
+          savingGoal: 0,
+          usdToCrc: 500,
+          expenses: []
+        };
+      }
+      return appState[key];
+    }
+
+    function formatUSD(value) {
+      const num = Number(value) || 0;
+      return "$" + num.toFixed(2);
+    }
+
+    function populateMonthSelect() {
+      const sel = document.getElementById("monthSelect");
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+      sel.innerHTML = "";
+      for (let offset = -3; offset <= 3; offset++) {
+        const d = new Date(currentYear, now.getMonth() + offset, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const key = y + "-" + String(m).padStart(2, "0");
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = monthNames[d.getMonth()] + " " + y;
+        sel.appendChild(opt);
+      }
+
+      const currentKey = currentYear + "-" + String(now.getMonth() + 1).padStart(2, "0");
+      sel.value = currentKey;
+    }
+
+    function renderFromState() {
+      const key = currentMonthKey();
+      if (!key) return;
+      const state = ensureMonthState(key);
+
+      document.getElementById("income1").value = state.income1 || "";
+      document.getElementById("income2").value = state.income2 || "";
+      document.getElementById("savingGoal").value = state.savingGoal || "";
+      document.getElementById("usdToCrc").value = state.usdToCrc || "";
+
+      const list = document.getElementById("expensesList");
+      list.innerHTML = "";
+      (state.expenses || []).forEach((exp, idx) => {
+        const row = document.createElement("div");
+        row.className = "expense-row";
+
+        const descSpan = document.createElement("span");
+        descSpan.className = "desc";
+        descSpan.textContent = exp.desc || "(Sin descripción)";
+
+        const currencyTag = document.createElement("span");
+        currencyTag.className = "pill " + (exp.currency === "USD" ? "tag-usd" : "tag-crc");
+        currencyTag.textContent = exp.currency === "USD" ? "USD" : "CRC";
+
+        const amountSpan = document.createElement("span");
+        amountSpan.className = "amount";
+        const showAmount = Number(exp.amount) || 0;
+        amountSpan.textContent =
+          (exp.currency === "USD" ? "$" : "₡") + showAmount.toFixed(2);
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.textContent = "Borrar";
+        btnDel.addEventListener("click", () => {
+          state.expenses.splice(idx, 1);
+          saveState(appState);
+          renderFromState();
+        });
+
+        row.appendChild(descSpan);
+        row.appendChild(currencyTag);
+        row.appendChild(amountSpan);
+        row.appendChild(btnDel);
+        list.appendChild(row);
+      });
+
+      recalculateSummary();
+    }
+
+    function recalculateSummary() {
+      const key = currentMonthKey();
+      const state = ensureMonthState(key);
+
+      const income1 = Number(state.income1) || 0;
+      const income2 = Number(state.income2) || 0;
+      const savingGoal = Number(state.savingGoal) || 0;
+      const usdToCrc = Number(state.usdToCrc) || 500;
+
+      const totalIncome = income1 + income2;
+      const available = totalIncome - savingGoal;
+
+      let totalExpensesUsd = 0;
+      (state.expenses || []).forEach(exp => {
+        const amount = Number(exp.amount) || 0;
+        if (exp.currency === "USD") {
+          totalExpensesUsd += amount;
+        } else if (exp.currency === "CRC") {
+          if (usdToCrc > 0) {
+            totalExpensesUsd += amount / usdToCrc;
+          }
+        }
+      });
+
+      const resultAfterExpenses = totalIncome - totalExpensesUsd;
+      const finalResult = totalIncome - savingGoal - totalExpensesUsd;
+
+      document.getElementById("sumIncome").textContent = formatUSD(totalIncome);
+      document.getElementById("sumAvailable").textContent = formatUSD(available);
+      document.getElementById("sumExpenses").textContent = formatUSD(totalExpensesUsd);
+      document.getElementById("sumResultAfterExpenses").textContent = formatUSD(resultAfterExpenses);
+      document.getElementById("sumFinal").textContent = formatUSD(finalResult);
+
+      function setClass(id, value) {
+        const el = document.getElementById(id);
+        el.classList.remove("positive", "negative", "neutral");
+        if (value > 0.01) el.classList.add("positive");
+        else if (value < -0.01) el.classList.add("negative");
+        else el.classList.add("neutral");
+      }
+
+      setClass("sumAvailable", available);
+      setClass("sumResultAfterExpenses", resultAfterExpenses);
+      setClass("sumFinal", finalResult);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      populateMonthSelect();
+
+      const monthSelect = document.getElementById("monthSelect");
+      monthSelect.addEventListener("change", () => {
+        renderFromState();
+      });
+
+      ["income1", "income2", "savingGoal", "usdToCrc"].forEach(id => {
+        document.getElementById(id).addEventListener("input", e => {
+          const key = currentMonthKey();
+          const state = ensureMonthState(key);
+          state[id] = e.target.value;
+          saveState(appState);
+          recalculateSummary();
+        });
+      });
+
+      document.getElementById("btnAddExpense").addEventListener("click", () => {
+        const key = currentMonthKey();
+        const state = ensureMonthState(key);
+        const desc = document.getElementById("expenseDesc").value.trim();
+        const amount = Number(document.getElementById("expenseAmount").value);
+        const currency = document.getElementById("expenseCurrency").value;
+
+        if (!amount || amount <= 0) {
+          alert("Ingresa un monto válido.");
+          return;
+        }
+
+        state.expenses.push({
+          desc,
+          amount,
+          currency
+        });
+
+        document.getElementById("expenseAmount").value = "";
+        document.getElementById("expenseDesc").value = "";
+
+        saveState(appState);
+        renderFromState();
+      });
+
+      document.getElementById("btnClearMonth").addEventListener("click", () => {
+        const key = currentMonthKey();
+        if (!key) return;
+        if (!confirm("¿Borrar todos los datos del mes seleccionado?")) return;
+        appState[key] = {
+          income1: 0,
+          income2: 0,
+          savingGoal: 0,
+          usdToCrc: 500,
+          expenses: []
+        };
+        saveState(appState);
+        renderFromState();
+      });
+
+      renderFromState();
+    });
+  </script>
+</body>
+</html>
